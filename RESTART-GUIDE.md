@@ -135,7 +135,19 @@ Expected: K8s pods, Pod logs, APM/trace spans, AI completions, AI tokens, K8s ev
 
 ---
 
-## Fast path: cluster still exists (just reconnect)  (~1 min)
+## Fast path A: cluster PAUSED (nodegroup scaled to 0)  (~8–10 min)
+This is the usual state between rehearsals — `scripts/pause.sh` scaled `ng-robotshop` to 0
+to cut EC2 cost while keeping the control plane, manifests, secrets, ELB URLs, and all NR
+config. **Do NOT use the reconnect path below — it won't bring nodes back.** Resume with:
+```bash
+bash scripts/resume.sh        # scales nodegroup 0->3, fixes context, waits for rollouts
+# then, after ~3-5 min of traffic:
+bash scripts/verify.sh
+```
+> `resume.sh` re-asserts the EKS context (dodges the OrbStack trap) and prints both ELB URLs.
+> To pause again after rehearsal: `bash scripts/pause.sh` (residual ~$3–4/day while paused).
+
+## Fast path B: cluster up with nodes Ready (just reconnect)  (~1 min)
 ```bash
 aws eks update-kubeconfig --name robot-shop-eks --region ap-south-1
 kubectl config use-context arn:aws:eks:ap-south-1:926634327293:cluster/robot-shop-eks
@@ -163,5 +175,6 @@ bash scripts/teardown.sh      # deletes workloads, ELBs, cluster, ECR (guarded p
 | 6. Dashboards + alerts (+ PagerDuty) | 1–2 min |
 | 7. Verify | 1 min (after data lands) |
 | **Total (from scratch)** | **≈ 50–65 min** |
-| Reconnect (cluster up) | ~1 min |
+| Resume from paused (nodegroup 0→3) | 8–10 min |
+| Reconnect (cluster up, nodes Ready) | ~1 min |
 | Teardown | 10–15 min |

@@ -36,7 +36,7 @@ robot-shop/     vendored upstream Helm chart + values
 observability/  OTel Operator install, collector config, Instrumentation CRD
 ai-assistant/   OpenAI shop-assistant service (FastAPI), Dockerfile, k8s manifests, loadgen
 demo/           demo-flow.md, demo-guide.md
-scripts/        load-env.sh, deploy/verify/teardown helpers
+scripts/        load-env, verify, show-otel, pause/resume, teardown helpers
 ```
 
 ## Quickstart
@@ -57,20 +57,27 @@ bash scripts/verify.sh            # confirm all signals in New Relic
 Keys live only in the **macOS Keychain** and a **gitignored `.env`** (and as in-cluster
 Kubernetes Secrets). Nothing sensitive is committed. See `.env.example`.
 
+## Pause / resume (cut cost between rehearsals)
+```bash
+bash scripts/pause.sh             # scale nodegroup 3->0; keeps cluster, ELBs, NR config (~$3-4/day)
+bash scripts/resume.sh            # scale 0->3, fix kubectl context, wait rollouts (~8-10 min)
+```
+
 ## Teardown
 ```bash
 bash scripts/teardown.sh          # eksctl delete cluster + helm uninstalls + cleanup
 ```
 
-> ⚠️ Cost: EKS control plane + 3× t3.large ≈ $10–12/day in ap-south-1. Tear down when done.
+> ⚠️ Cost: EKS control plane + 3× t3.large ≈ $10–12/day in ap-south-1. `pause.sh` drops this
+> to ~$3–4/day without destroying anything; `teardown.sh` takes it to $0.
 
-## Build status
+## Build status — complete & verified (all 6 NR signals green); currently paused
 - [x] Phase 0 — repo + tooling bootstrap
-- [ ] Phase 1 — EKS cluster
-- [ ] Phase 2 — nri-bundle
-- [ ] Phase 3 — robot-shop
-- [ ] Phase 4 — OTel tracing
-- [ ] Phase 5 — OpenAI shop-assistant + AI Monitoring
-- [ ] Phase 6 — dashboards + alerts
-- [ ] Phase 7 — demo flow + guide
-- [ ] Phase 8 — teardown + GitHub push
+- [x] Phase 1 — EKS cluster
+- [x] Phase 2 — nri-bundle
+- [x] Phase 3 — robot-shop
+- [x] Phase 4 — OTel tracing (Node + Java + Python auto-instrumentation)
+- [x] Phase 5 — OpenAI shop-assistant + AI Monitoring
+- [x] Phase 6 — dashboards + alerts → PagerDuty
+- [x] Phase 7 — demo flow + guide (+ competitive talking points)
+- [x] Phase 8 — teardown + GitHub push
