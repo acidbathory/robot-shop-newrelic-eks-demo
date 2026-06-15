@@ -11,7 +11,7 @@ run_nrql() {  # $1 = NRQL -> prints the first numeric result
   curl -s -X POST "$NEW_RELIC_API_ENDPOINT" \
     -H "Content-Type: application/json" -H "API-Key: $NEW_RELIC_USER_KEY" \
     -d "$(jq -n --argjson a "$NEW_RELIC_ACCOUNT_ID" --arg q "$q" \
-        '{query:"{actor{account(id:$a){nrql(query:$q){results}}}}",variables:{a:$a,q:$q}}')" \
+        '{query:"query($a:Int!,$q:Nrql!){actor{account(id:$a){nrql(query:$q){results}}}}",variables:{a:$a,q:$q}}')" \
     | jq -r '.data.actor.account.nrql.results[0] | (.[] // 0)' 2>/dev/null | head -1
 }
 
