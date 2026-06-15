@@ -9,10 +9,15 @@ ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 source "$ROOT/scripts/load-env.sh" >/dev/null
 NG=ng-robotshop
 
+# Disable synthetic monitors first — once the endpoints go down they'd fail every 5 min from
+# every location and page PagerDuty for the whole pause. (resume.sh re-enables them.)
+echo "==> Disabling synthetic monitors (so they don't page while the endpoints are down)"
+bash "$ROOT/newrelic/toggle-synthetics.sh" DISABLED || echo "    (warning: could not disable synthetics — they may page during the pause)"
+
 echo "==> Scaling nodegroup $NG to 0 (cluster $CLUSTER, $AWS_REGION)"
 eksctl scale nodegroup --cluster "$CLUSTER" --region "$AWS_REGION" --name "$NG" \
   --nodes 0 --nodes-min 0 --nodes-max 4
 
 echo "==> Done. Nodes will terminate in ~2-3 min; pods stop with them."
-echo "    Workloads, services/ELBs, secrets, and NR config all persist."
+echo "    Workloads, services/ELBs, secrets, and NR config all persist; synthetics disabled."
 echo "    Resume for rehearsal:  bash scripts/resume.sh"

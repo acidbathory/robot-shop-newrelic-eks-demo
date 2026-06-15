@@ -24,6 +24,10 @@ for d in catalogue cart user shipping payment web; do
 done
 kubectl rollout status deploy/ai-assistant -n ai-assistant --timeout=5m || true
 
+# Re-enable synthetic monitors (pause.sh disabled them so they wouldn't page while down).
+echo "==> Re-enabling synthetic monitors"
+bash "$ROOT/newrelic/toggle-synthetics.sh" ENABLED || echo "    (warning: could not re-enable synthetics — enable them in the UI)"
+
 echo "==> URLs (ELBs are preserved across pause/resume):"
 echo "    robot-shop:   http://$(kubectl get svc web -n robot-shop -o jsonpath='{.status.loadBalancer.ingress[0].hostname}' 2>/dev/null):8080/"
 echo "    ai-assistant: http://$(kubectl get svc ai-assistant -n ai-assistant -o jsonpath='{.status.loadBalancer.ingress[0].hostname}' 2>/dev/null)/"

@@ -60,9 +60,11 @@ Kubernetes Secrets). Nothing sensitive is committed. See `.env.example`.
 
 ## Pause / resume (cut cost between rehearsals)
 ```bash
-bash scripts/pause.sh             # scale nodegroup 3->0; keeps cluster, ELBs, NR config (~$3-4/day)
-bash scripts/resume.sh            # scale 0->3, fix kubectl context, wait rollouts (~8-10 min)
+bash scripts/pause.sh             # disable synthetics + scale nodegroup 3->0; keeps cluster, ELBs, NR config (~$3-4/day)
+bash scripts/resume.sh            # scale 0->3, fix kubectl context, wait rollouts, re-enable synthetics (~8-10 min)
 ```
+> `pause.sh` disables the synthetic monitors first so they don't page PagerDuty against the
+> down endpoints; `resume.sh` re-enables them. (`newrelic/toggle-synthetics.sh ENABLED|DISABLED`.)
 
 ## Teardown
 ```bash

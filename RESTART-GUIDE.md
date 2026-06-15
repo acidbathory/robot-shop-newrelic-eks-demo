@@ -149,8 +149,12 @@ bash scripts/resume.sh        # scales nodegroup 0->3, fixes context, waits for 
 # then, after ~3-5 min of traffic:
 bash scripts/verify.sh
 ```
-> `resume.sh` re-asserts the EKS context (dodges the OrbStack trap) and prints both ELB URLs.
+> `resume.sh` re-asserts the EKS context (dodges the OrbStack trap), **re-enables the synthetic
+> monitors**, and prints both ELB URLs.
 > To pause again after rehearsal: `bash scripts/pause.sh` (residual ~$3–4/day while paused).
+> `pause.sh` **disables the synthetic monitors first** — otherwise they'd fail against the
+> down endpoints every 5 min and page PagerDuty for the whole pause. (`newrelic/toggle-synthetics.sh`
+> handles both directions, finding monitors by tag so it survives rebuilds.)
 
 ## Fast path B: cluster up with nodes Ready (just reconnect)  (~1 min)
 ```bash
