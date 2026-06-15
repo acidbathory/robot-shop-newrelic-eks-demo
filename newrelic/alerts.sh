@@ -2,6 +2,7 @@
 # Phase 6b — create an alert policy + NRQL conditions via NerdGraph.
 # Idempotent-ish: always creates a fresh policy named below (delete old ones in UI if re-running).
 set -euo pipefail
+set +o braceexpand   # GraphQL queries contain {..,..} groups; keep bash from expanding them
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 source "$ROOT/scripts/load-env.sh" >/dev/null
 : "${NEW_RELIC_USER_KEY:?}"; : "${NEW_RELIC_ACCOUNT_ID:?}"
