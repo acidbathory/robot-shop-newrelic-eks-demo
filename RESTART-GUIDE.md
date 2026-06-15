@@ -109,6 +109,8 @@ begins here** (pennies/day on gpt-4o-mini).
 ```bash
 bash newrelic/deploy-dashboard.sh                # prints dashboard GUID/permalink
 bash newrelic/alerts.sh                          # policy + 6 NRQL conditions
+# Optional — route alerts to PagerDuty (needs pagerduty_integration_key in Keychain):
+bash newrelic/pagerduty.sh                       # destination + channel + workflow ~30s
 ```
 > Both scripts **create new resources each run** (no upsert). Re-running makes duplicates —
 > delete the old dashboard (`dashboardDelete`) / policy (`alertsPolicyDelete`) first if rerunning.

@@ -74,12 +74,18 @@ Companion to `demo-flow.md`. For each New Relic surface: **what it is**, **why i
 - **Say:** *"The whole dashboard is a JSON file in git. `deploy-dashboard.sh` creates it via the API
   and prints the permalink. Same for alerts."*
 
-## 7. NRQL alerts
-- **What:** `newrelic/alerts.sh` creates a policy + 6 NRQL conditions via NerdGraph.
+## 7. NRQL alerts → PagerDuty
+- **What:** `newrelic/alerts.sh` creates a policy + 6 NRQL conditions via NerdGraph;
+  `newrelic/pagerduty.sh` adds a **Destination → Channel → Workflow** that pages PagerDuty
+  on any of this policy's issues.
 - **Conditions:** pod crashloop, pod not ready, service error rate >10%, API p95 >1.5s,
   **LLM hourly cost guard**, log error surge.
-- **Say:** *"Including an **AI cost guard** — if OpenAI spend in an hour crosses a threshold, it pages.
-  That's the kind of control AI apps need and rarely have."*
+- **Say:** *"Conditions are NRQL, defined as code. Issues route through a Workflow to a
+  PagerDuty service — so a threshold breach becomes a real incident on someone's phone.
+  Including an **AI cost guard**: if OpenAI spend in an hour crosses a threshold, it pages —
+  the kind of control AI apps need and rarely have."*
+- **Flow to show:** Alerts & AI → **Workflows** (`Robot Shop -> PagerDuty`) → **Destinations**
+  (the PagerDuty service). Then trigger the RCA below and switch to the PagerDuty incident view.
 
 ---
 
@@ -90,17 +96,19 @@ The retriever-style failure story, done with robot-shop's catalogue:
 # 1. Take catalogue down
 kubectl scale deploy/catalogue --replicas=0 -n robot-shop
 ```
-Then narrate, in New Relic, in this order (cause → effect → evidence):
+Then narrate, in New Relic, in this order (cause → effect → evidence → page):
 1. **APM page** — catalogue error rate / dependent services' error rate climbs within ~1 min.
-2. **Alerts** — the "Service error rate" condition opens an incident.
-3. **Service map / distributed tracing** — the broken edge to catalogue is visible; traces error at that hop.
-4. **Logs** — dependent pods show connection-refused / timeout messages, correlated to the same window.
-5. **Restore:**
+2. **Alerts** — the "Service error rate" condition opens an issue.
+3. **PagerDuty** — the workflow forwards the issue; a **PagerDuty incident** is created and pages.
+   Switch to the PagerDuty incident to show the New Relic issue title + details in the payload.
+4. **Service map / distributed tracing** — the broken edge to catalogue is visible; traces error at that hop.
+5. **Logs** — dependent pods show connection-refused / timeout messages, correlated to the same window.
+6. **Restore:**
 ```bash
 kubectl scale deploy/catalogue --replicas=1 -n robot-shop
 ```
-   Watch error rate fall and the incident auto-close. *"Mean-time-to-resolution is short when cause,
-   effect, and evidence are in one place."*
+   Watch error rate fall, the New Relic issue close, and the **PagerDuty incident auto-resolve**.
+   *"Mean-time-to-resolution is short when cause, effect, evidence, and paging are in one place."*
 
 > Alternative AI-flavored RCA: point the assistant's `CATALOGUE_URL` at a bad host (or scale catalogue
 > to 0) and show the assistant degrade — its traces error on the catalogue hop while OpenAI calls

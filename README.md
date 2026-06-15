@@ -26,7 +26,7 @@ dashboards and alerts defined as code.
 | 4 | APM + distributed tracing | robot-shop via OTel auto-instrumentation |
 | 5 | AI Monitoring (tokens, cost, model, response) | OpenAI shop-assistant via NR Python APM agent |
 | 6 | Dashboards as code | NerdGraph (`newrelic/dashboard.json`) |
-| 7 | NRQL alerts | NerdGraph (`newrelic/alerts.sh`) |
+| 7 | NRQL alerts → PagerDuty | NerdGraph (`newrelic/alerts.sh` + `newrelic/pagerduty.sh`) |
 
 ## Layout
 ```
