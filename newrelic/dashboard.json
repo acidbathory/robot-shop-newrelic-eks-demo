@@ -1,0 +1,155 @@
+{
+  "name": "Robot Shop on EKS — Full-Stack New Relic",
+  "description": "Kubernetes, robot-shop APM & traces, Claude AI Monitoring, and logs. Cluster: robot-shop-eks.",
+  "permissions": "PUBLIC_READ_WRITE",
+  "pages": [
+    {
+      "name": "Kubernetes",
+      "widgets": [
+        {
+          "title": "Pods running (by deployment)",
+          "layout": { "column": 1, "row": 1, "width": 4, "height": 3 },
+          "visualization": { "id": "viz.bar" },
+          "rawConfiguration": {
+            "nrqlQueries": [{ "accountIds": [__ACCOUNT_ID__], "query": "SELECT uniqueCount(podName) FROM K8sPodSample WHERE clusterName = 'robot-shop-eks' FACET deploymentName SINCE 30 minutes ago" }]
+          }
+        },
+        {
+          "title": "Nodes — CPU used %",
+          "layout": { "column": 5, "row": 1, "width": 4, "height": 3 },
+          "visualization": { "id": "viz.line" },
+          "rawConfiguration": {
+            "nrqlQueries": [{ "accountIds": [__ACCOUNT_ID__], "query": "SELECT average(cpuUsedCores / cpuLimitCores * 100) FROM K8sNodeSample WHERE clusterName = 'robot-shop-eks' FACET nodeName TIMESERIES SINCE 30 minutes ago" }]
+          }
+        },
+        {
+          "title": "Container restarts",
+          "layout": { "column": 9, "row": 1, "width": 4, "height": 3 },
+          "visualization": { "id": "viz.table" },
+          "rawConfiguration": {
+            "nrqlQueries": [{ "accountIds": [__ACCOUNT_ID__], "query": "SELECT max(restartCount) FROM K8sContainerSample WHERE clusterName = 'robot-shop-eks' FACET podName, containerName SINCE 1 hour ago LIMIT 20" }]
+          }
+        },
+        {
+          "title": "Pod memory working set (by pod)",
+          "layout": { "column": 1, "row": 4, "width": 6, "height": 3 },
+          "visualization": { "id": "viz.line" },
+          "rawConfiguration": {
+            "nrqlQueries": [{ "accountIds": [__ACCOUNT_ID__], "query": "SELECT average(memoryWorkingSetBytes/1e6) AS 'MB' FROM K8sContainerSample WHERE clusterName = 'robot-shop-eks' FACET podName TIMESERIES SINCE 30 minutes ago" }]
+          }
+        },
+        {
+          "title": "Kubernetes events",
+          "layout": { "column": 7, "row": 4, "width": 6, "height": 3 },
+          "visualization": { "id": "viz.table" },
+          "rawConfiguration": {
+            "nrqlQueries": [{ "accountIds": [__ACCOUNT_ID__], "query": "SELECT reason, message, `metadata.name` FROM InfrastructureEvent WHERE clusterName = 'robot-shop-eks' SINCE 1 hour ago LIMIT 30" }]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Robot Shop APM & Traces",
+      "widgets": [
+        {
+          "title": "Throughput (req/min) by service",
+          "layout": { "column": 1, "row": 1, "width": 6, "height": 3 },
+          "visualization": { "id": "viz.line" },
+          "rawConfiguration": {
+            "nrqlQueries": [{ "accountIds": [__ACCOUNT_ID__], "query": "SELECT rate(count(*), 1 minute) FROM Span WHERE span.kind IN ('server','consumer') FACET service.name TIMESERIES SINCE 30 minutes ago" }]
+          }
+        },
+        {
+          "title": "p95 latency (ms) by service",
+          "layout": { "column": 7, "row": 1, "width": 6, "height": 3 },
+          "visualization": { "id": "viz.line" },
+          "rawConfiguration": {
+            "nrqlQueries": [{ "accountIds": [__ACCOUNT_ID__], "query": "SELECT percentile(duration.ms, 95) FROM Span WHERE span.kind = 'server' FACET service.name TIMESERIES SINCE 30 minutes ago" }]
+          }
+        },
+        {
+          "title": "Error rate % by service",
+          "layout": { "column": 1, "row": 4, "width": 6, "height": 3 },
+          "visualization": { "id": "viz.line" },
+          "rawConfiguration": {
+            "nrqlQueries": [{ "accountIds": [__ACCOUNT_ID__], "query": "SELECT percentage(count(*), WHERE otel.status_code = 'ERROR') FROM Span WHERE span.kind = 'server' FACET service.name TIMESERIES SINCE 30 minutes ago" }]
+          }
+        },
+        {
+          "title": "Slowest database / client spans",
+          "layout": { "column": 7, "row": 4, "width": 6, "height": 3 },
+          "visualization": { "id": "viz.table" },
+          "rawConfiguration": {
+            "nrqlQueries": [{ "accountIds": [__ACCOUNT_ID__], "query": "SELECT average(duration.ms), count(*) FROM Span WHERE span.kind = 'client' FACET service.name, name SINCE 30 minutes ago LIMIT 20" }]
+          }
+        }
+      ]
+    },
+    {
+      "name": "AI Monitoring (Claude)",
+      "widgets": [
+        {
+          "title": "Chat completions / min",
+          "layout": { "column": 1, "row": 1, "width": 4, "height": 3 },
+          "visualization": { "id": "viz.line" },
+          "rawConfiguration": {
+            "nrqlQueries": [{ "accountIds": [__ACCOUNT_ID__], "query": "SELECT rate(count(*), 1 minute) FROM LlmChatCompletionSummary FACET response.model TIMESERIES SINCE 30 minutes ago" }]
+          }
+        },
+        {
+          "title": "Total tokens by model",
+          "layout": { "column": 5, "row": 1, "width": 4, "height": 3 },
+          "visualization": { "id": "viz.bar" },
+          "rawConfiguration": {
+            "nrqlQueries": [{ "accountIds": [__ACCOUNT_ID__], "query": "SELECT sum(response.usage.total_tokens) FROM LlmChatCompletionSummary FACET response.model SINCE 1 hour ago" }]
+          }
+        },
+        {
+          "title": "Estimated cost (USD) — Haiku 4.5 pricing",
+          "layout": { "column": 9, "row": 1, "width": 4, "height": 3 },
+          "visualization": { "id": "viz.billboard" },
+          "rawConfiguration": {
+            "nrqlQueries": [{ "accountIds": [__ACCOUNT_ID__], "query": "SELECT sum(response.usage.prompt_tokens)/1e6*1.0 + sum(response.usage.completion_tokens)/1e6*5.0 AS 'USD' FROM LlmChatCompletionSummary SINCE 1 hour ago" }]
+          }
+        },
+        {
+          "title": "LLM response time p95 (ms)",
+          "layout": { "column": 1, "row": 4, "width": 6, "height": 3 },
+          "visualization": { "id": "viz.line" },
+          "rawConfiguration": {
+            "nrqlQueries": [{ "accountIds": [__ACCOUNT_ID__], "query": "SELECT percentile(duration, 95)*1000 FROM LlmChatCompletionSummary FACET response.model TIMESERIES SINCE 30 minutes ago" }]
+          }
+        },
+        {
+          "title": "Recent prompts & responses",
+          "layout": { "column": 7, "row": 4, "width": 6, "height": 3 },
+          "visualization": { "id": "viz.table" },
+          "rawConfiguration": {
+            "nrqlQueries": [{ "accountIds": [__ACCOUNT_ID__], "query": "SELECT content FROM LlmChatCompletionMessage SINCE 30 minutes ago LIMIT 20" }]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Logs",
+      "widgets": [
+        {
+          "title": "Log volume by pod",
+          "layout": { "column": 1, "row": 1, "width": 6, "height": 3 },
+          "visualization": { "id": "viz.line" },
+          "rawConfiguration": {
+            "nrqlQueries": [{ "accountIds": [__ACCOUNT_ID__], "query": "SELECT count(*) FROM Log WHERE cluster_name = 'robot-shop-eks' FACET pod_name TIMESERIES SINCE 30 minutes ago LIMIT 20" }]
+          }
+        },
+        {
+          "title": "Error-level logs",
+          "layout": { "column": 7, "row": 1, "width": 6, "height": 3 },
+          "visualization": { "id": "viz.table" },
+          "rawConfiguration": {
+            "nrqlQueries": [{ "accountIds": [__ACCOUNT_ID__], "query": "SELECT message, pod_name, container_name FROM Log WHERE cluster_name = 'robot-shop-eks' AND (level = 'error' OR message LIKE '%error%' OR message LIKE '%Exception%') SINCE 30 minutes ago LIMIT 50" }]
+          }
+        }
+      ]
+    }
+  ]
+}
