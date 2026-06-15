@@ -1,0 +1,29 @@
+# Secrets & local env — NEVER commit
+.env
+.env.local
+*.pem
+*.key
+kubeconfig*
+**/secret.yaml
+**/secrets.yaml
+.secrets/
+
+# Anthropic / NR keys accidentally dropped in files
+*ANTHROPIC_API_KEY*
+*license-key*
+
+# Build / vendor noise
+node_modules/
+__pycache__/
+*.pyc
+.venv/
+venv/
+dist/
+build/
+*.log
+
+# OS
+.DS_Store
+
+# Helm
+**/charts/*.tgz
