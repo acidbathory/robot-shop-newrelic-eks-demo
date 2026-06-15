@@ -1,0 +1,53 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ai-assistant
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ai-assistant
+  namespace: ai-assistant
+  labels: { app: ai-assistant }
+spec:
+  replicas: 1
+  selector: { matchLabels: { app: ai-assistant } }
+  template:
+    metadata:
+      labels: { app: ai-assistant }
+    spec:
+      containers:
+        - name: ai-assistant
+          image: __IMAGE__            # substituted by build-and-push.sh
+          imagePullPolicy: Always
+          ports: [{ containerPort: 8000 }]
+          env:
+            - name: NEW_RELIC_LICENSE_KEY
+              valueFrom: { secretKeyRef: { name: ai-assistant-secrets, key: nrLicenseKey } }
+            - name: NEW_RELIC_APP_NAME
+              value: robot-shop-ai-assistant
+            - name: ANTHROPIC_API_KEY
+              valueFrom: { secretKeyRef: { name: ai-assistant-secrets, key: anthropicApiKey } }
+            - name: ANTHROPIC_MODEL
+              value: claude-haiku-4-5
+            - name: CATALOGUE_URL
+              value: http://catalogue.robot-shop.svc.cluster.local:8080
+          readinessProbe:
+            httpGet: { path: /healthz, port: 8000 }
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          resources:
+            requests: { cpu: 100m, memory: 256Mi }
+            limits:   { cpu: 500m, memory: 512Mi }
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: ai-assistant
+  namespace: ai-assistant
+  labels: { app: ai-assistant }
+spec:
+  type: LoadBalancer
+  selector: { app: ai-assistant }
+  ports:
+    - { name: http, port: 80, targetPort: 8000 }

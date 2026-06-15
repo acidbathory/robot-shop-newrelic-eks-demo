@@ -1,0 +1,33 @@
+# Generates realistic chat traffic so AI Monitoring always has data during the demo.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: chat-loadgen
+  namespace: ai-assistant
+  labels: { app: chat-loadgen }
+spec:
+  replicas: 1
+  selector: { matchLabels: { app: chat-loadgen } }
+  template:
+    metadata:
+      labels: { app: chat-loadgen }
+    spec:
+      containers:
+        - name: chat-loadgen
+          image: curlimages/curl:8.11.1
+          command: ["/bin/sh", "-c"]
+          args:
+            - |
+              PROMPTS="What is a good starter drone?|Do you sell humanoid robots?|Whats your cheapest gadget?|Recommend a robot for kids|Whats on sale today?|I want something for outdoor photography|Compare your two best drones|Do you have anything under 100 dollars?"
+              while true; do
+                OLD_IFS=$IFS; IFS='|'; set -- $PROMPTS; IFS=$OLD_IFS
+                N=$(( $(date +%s) % $# + 1 ))
+                eval Q=\${$N}
+                curl -s -m 30 -X POST http://ai-assistant.ai-assistant.svc.cluster.local/chat \
+                  -H 'Content-Type: application/json' \
+                  -d "{\"message\": \"$Q\"}" >/dev/null 2>&1 || true
+                sleep $(( 20 + $(date +%s) % 25 ))
+              done
+          resources:
+            requests: { cpu: 10m, memory: 32Mi }
+            limits:   { cpu: 50m, memory: 64Mi }
