@@ -160,7 +160,7 @@ bash scripts/teardown.sh      # deletes workloads, ELBs, cluster, ECR (guarded p
 | 3. robot-shop | 5–8 min |
 | 4. OTel tracing | 8–12 min |
 | 5. OpenAI assistant | 6–10 min |
-| 6. Dashboards + alerts | 1 min |
+| 6. Dashboards + alerts (+ PagerDuty) | 1–2 min |
 | 7. Verify | 1 min (after data lands) |
 | **Total (from scratch)** | **≈ 50–65 min** |
 | Reconnect (cluster up) | ~1 min |
