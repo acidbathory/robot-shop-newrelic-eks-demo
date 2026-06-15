@@ -1,6 +1,14 @@
+# ServiceAccount for the operator-managed collector. We name it explicitly in the
+# OpenTelemetryCollector CR, so we must create it (the operator only auto-creates a
+# SA when none is named).
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: nr-collector
+  namespace: observability
+---
 # k8sattributes processor needs to read pods/namespaces/nodes/workloads so it can
 # tag telemetry with K8s metadata (correlating services to pods/deployments in NR).
-# The operator creates the SA "nr-collector" in the observability namespace.
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:

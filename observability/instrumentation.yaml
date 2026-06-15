@@ -20,5 +20,8 @@ spec:
   resource:
     addK8sUIDAttributes: true
   java: {}
-  nodejs: {}
+  # robot-shop's Node services run Node 14; pin an OTel JS auto-instrumentation
+  # image from when Node 14 was still supported (current images need Node 16+).
+  nodejs:
+    image: ghcr.io/open-telemetry/opentelemetry-operator/autoinstrumentation-nodejs:0.46.0
   python: {}
