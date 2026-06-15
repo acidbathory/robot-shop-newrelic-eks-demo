@@ -1,0 +1,57 @@
+# Operator-managed collector (Deployment mode). Receives OTLP from auto-instrumented
+# robot-shop services, tags with k8s attributes, exports to New Relic OTLP.
+# __NR_OTLP_ENDPOINT__ is substituted by install-operator.sh.
+apiVersion: opentelemetry.io/v1beta1
+kind: OpenTelemetryCollector
+metadata:
+  name: nr
+  namespace: observability
+spec:
+  mode: deployment
+  replicas: 1
+  serviceAccount: nr-collector
+  env:
+    - name: NR_INGEST_KEY
+      valueFrom:
+        secretKeyRef: { name: newrelic-keys, key: ingestKey }
+  config:
+    receivers:
+      otlp:
+        protocols:
+          grpc: { endpoint: 0.0.0.0:4317 }
+          http: { endpoint: 0.0.0.0:4318 }
+    processors:
+      batch: { timeout: 5s }
+      cumulativetodelta: {}
+      k8sattributes:
+        auth_type: serviceAccount
+        passthrough: false
+        extract:
+          metadata:
+            - k8s.namespace.name
+            - k8s.pod.name
+            - k8s.deployment.name
+            - k8s.node.name
+        pod_association:
+          - sources: [{ from: resource_attribute, name: k8s.pod.ip }]
+          - sources: [{ from: connection }]
+    exporters:
+      otlphttp/newrelic:
+        endpoint: __NR_OTLP_ENDPOINT__
+        headers:
+          api-key: ${env:NR_INGEST_KEY}
+        compression: gzip
+    service:
+      pipelines:
+        traces:
+          receivers: [otlp]
+          processors: [k8sattributes, batch]
+          exporters: [otlphttp/newrelic]
+        metrics:
+          receivers: [otlp]
+          processors: [k8sattributes, cumulativetodelta, batch]
+          exporters: [otlphttp/newrelic]
+        logs:
+          receivers: [otlp]
+          processors: [k8sattributes, batch]
+          exporters: [otlphttp/newrelic]

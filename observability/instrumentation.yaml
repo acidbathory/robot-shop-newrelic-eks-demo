@@ -1,0 +1,24 @@
+# Auto-instrumentation config consumed by the OTel Operator. Pods annotated with
+# instrumentation.opentelemetry.io/inject-<lang>: "observability/robot-shop"
+# get the matching SDK + OTLP exporter injected, pointing at the nr collector.
+apiVersion: opentelemetry.io/v1alpha1
+kind: Instrumentation
+metadata:
+  name: robot-shop
+  namespace: observability
+spec:
+  exporter:
+    endpoint: http://nr-collector.observability.svc.cluster.local:4317
+  propagators:
+    - tracecontext
+    - baggage
+    - b3
+  sampler:
+    type: parentbased_traceidratio
+    argument: "1.0"      # sample everything for a demo
+  # Per-language images pinned by the operator; resource attrs added to every signal.
+  resource:
+    addK8sUIDAttributes: true
+  java: {}
+  nodejs: {}
+  python: {}

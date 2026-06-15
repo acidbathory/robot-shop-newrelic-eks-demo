@@ -1,0 +1,27 @@
+# k8sattributes processor needs to read pods/namespaces/nodes/workloads so it can
+# tag telemetry with K8s metadata (correlating services to pods/deployments in NR).
+# The operator creates the SA "nr-collector" in the observability namespace.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: otel-collector-k8s
+rules:
+  - apiGroups: [""]
+    resources: ["pods", "namespaces", "nodes"]
+    verbs: ["get", "list", "watch"]
+  - apiGroups: ["apps"]
+    resources: ["replicasets", "deployments"]
+    verbs: ["get", "list", "watch"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: otel-collector-k8s
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: otel-collector-k8s
+subjects:
+  - kind: ServiceAccount
+    name: nr-collector
+    namespace: observability
