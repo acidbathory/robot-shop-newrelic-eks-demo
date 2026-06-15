@@ -75,6 +75,13 @@ bash observability/annotate-robotshop.sh         # rollouts ~3-5 min
 > - `observability/instrumentation.yaml` pins `autoinstrumentation-nodejs:0.46.0` because
 >   robot-shop's Node services run **Node 14** (the default image needs Node 16+ and
 >   crashloops with `performance is not defined`).
+> - `observability/instrumentation.yaml` sets `java.env OTEL_EXPORTER_OTLP_PROTOCOL=grpc`
+>   (the Java agent defaults to http/protobuf, which fails against the collector's gRPC :4317).
+> - `robot-shop/helm/templates/shipping-deployment.yaml` memory is **1536Mi** (was 1000Mi);
+>   the JVM + OTel Java agent OOMKilled at 1000Mi. (Both baked in — no manual step.)
+>
+> Verify all 3 languages trace after a few min of traffic:
+> `bash scripts/show-otel.sh`  (Node + Java spans; payment/Python needs checkout traffic)
 >
 > If the collector deploy hangs in `FailedCreate` backoff after the SA exists, nudge it:
 > `kubectl delete rs -n observability -l app.kubernetes.io/name=nr-collector`

@@ -19,7 +19,13 @@ spec:
   # Per-language images pinned by the operator; resource attrs added to every signal.
   resource:
     addK8sUIDAttributes: true
-  java: {}
+  # The exporter endpoint above is the collector's gRPC port (4317). The Java agent
+  # defaults to OTLP http/protobuf, which fails against a gRPC port (okhttp retry
+  # errors + dropped spans) — force gRPC. (Node/Python already default to gRPC here.)
+  java:
+    env:
+      - name: OTEL_EXPORTER_OTLP_PROTOCOL
+        value: grpc
   # robot-shop's Node services run Node 14; pin an OTel JS auto-instrumentation
   # image from when Node 14 was still supported (current images need Node 16+).
   nodejs:

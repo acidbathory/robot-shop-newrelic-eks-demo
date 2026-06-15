@@ -23,14 +23,15 @@ spec:
         imagePullPolicy: {{ .Values.image.pullPolicy }}
         ports:
         - containerPort: 8080
-        # it's Java it needs lots of memory
+        # it's Java it needs lots of memory — bumped for the OTel Java agent
+        # (JVM + agent OOMKilled at the upstream 1000Mi limit, exit 137)
         resources:
           limits:
-            cpu: 200m
-            memory: 1000Mi
+            cpu: 500m
+            memory: 1536Mi
           requests:
-            cpu: 100m
-            memory: 500Mi
+            cpu: 200m
+            memory: 768Mi
         readinessProbe:
           httpGet:
             path: /health

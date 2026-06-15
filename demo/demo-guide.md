@@ -51,6 +51,50 @@ Companion to `demo-flow.md`. For each New Relic surface: **what it is**, **why i
   - `SELECT average(duration.ms), count(*) FROM Span WHERE span.kind='client' FACET service.name, name`
 - **Wow:** A single trace waterfall spanning web → catalogue → MongoDB, with timings per hop.
 
+## 4b. Showcasing OpenTelemetry *explicitly* (the "this is real OTel" proof)
+Run **`bash scripts/show-otel.sh`** live, or walk these four beats. The point: **nothing about
+the tracing is New Relic-specific or baked into the app** — it's the upstream OTel SDK,
+configured declaratively, exporting standard OTLP.
+
+1. **It's declarative — tracing is Kubernetes resources, not app code.**
+   `kubectl get opentelemetrycollector,instrumentation -n observability`
+   > *"Two custom resources define everything: a collector and an `Instrumentation` policy
+   > (sampler, propagators, exporter endpoint). No tracing code in robot-shop."*
+
+2. **Zero-touch injection — the Operator adds the OTel SDK at pod startup.**
+   `kubectl get pod -n robot-shop -l service=cart -o yaml` → show the **init container**
+   `opentelemetry-auto-instrumentation-nodejs` and the injected env:
+   `NODE_OPTIONS=--require …/autoinstrumentation.js`, `OTEL_SERVICE_NAME`,
+   `OTEL_EXPORTER_OTLP_ENDPOINT=…:4317`, `OTEL_PROPAGATORS=tracecontext,baggage,b3`.
+   > *"The app image is unchanged. The Operator injected the upstream OTel SDK via a single
+   > pod annotation — same mechanism for Node, Java, and Python."*
+
+3. **The collector is the vendor-neutral hop — OTLP in, OTLP out.**
+   Show `observability/otel-collector.yaml`: receivers `otlp` (4317/4318) → processors
+   `k8sattributes`/`batch` → exporter **`otlphttp/newrelic`** (`https://otlp.nr-data.net`).
+   > *"Standard OTLP arrives; the New Relic exporter is one block. Repoint that single
+   > `endpoint` at Jaeger, Grafana Tempo, or any OTLP backend and the app never knows."*
+
+4. **Proof in New Relic — spans are tagged as OpenTelemetry, by library.**
+   - `SELECT count(*) FROM Span WHERE instrumentation.provider='opentelemetry' FACET service.name`
+   - `SELECT count(*) FROM Span WHERE service.name IN ('catalogue','cart','user','shipping') FACET otel.library.name`
+     → Node: `@opentelemetry/instrumentation-express`, `-http`, `-mongodb`, `-redis`;
+       Java: `io.opentelemetry.tomcat-7.0`, `hibernate-4.0`, `jdbc`, `spring-data-1.8`.
+   - `SELECT latest(telemetry.sdk.language), latest(telemetry.sdk.version) FROM Span FACET service.name`
+   > *"Every span carries `instrumentation.provider = opentelemetry` and the exact OTel library
+   > that produced it. This is the OTel SDK's own instrumentation, surfaced natively — and the
+   > W3C `traceparent` header is why one trace stitches across services."*
+
+**Two real-world OTel gotchas we hit (great honesty points):**
+- robot-shop's Node services run **Node 14** → had to pin an older auto-instrumentation image
+  (current needs Node 16+). *(see `observability/instrumentation.yaml`)*
+- The **Java agent OOMKilled** at robot-shop's 1000Mi limit (JVM + agent), and defaults to OTLP
+  **http/protobuf** which fails against our gRPC port → bumped memory + forced `OTEL_EXPORTER_OTLP_PROTOCOL=grpc`.
+
+> **Demo-account hygiene:** the old local `k8s-ai-newrelic-demo` (services `api`, `llm-gateway`,
+> `retriever`) also reports to this account when OrbStack is running. Filter NRQL by the
+> robot-shop service names (as `show-otel.sh` does), or stop that local cluster before presenting.
+
 ## 5. AI Monitoring (OpenAI) — the headline
 - **What:** The assistant runs under New Relic's **Python APM agent**, which auto-instruments the
   **OpenAI SDK**. Every chat completion becomes an AI Monitoring event with model, tokens, latency,
