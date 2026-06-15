@@ -170,3 +170,70 @@ kubectl scale deploy/catalogue --replicas=1 -n robot-shop
   OpenAI on gpt-4o-mini is cents at demo volume. Everything tears down with `scripts/teardown.sh`.
 - **"Is the AI cost real or estimated?"** — token counts are real (from the API response); the USD
   figure is computed from published gpt-4o-mini pricing in NRQL.
+
+---
+
+## Competitive talking points (when asked)
+> Source: `compete.md` (Competitive Intelligence battlecards). **Lead with structural and
+> commercial arguments; validate specific feature claims before stating them live** — competitors'
+> OTel and AI capabilities move fast (Datadog has shipped Bits AI GA and expanded OTel support;
+> Grafana and Dynatrace ship constantly). Don't over-claim; acknowledge real strengths, then pivot.
+
+**The one frame:** New Relic is a *genuinely* unified platform — one data store (NRDB), one query
+language (NRQL), OTel-native ingest, consumption pricing. The competitors are either separately
+metered products behind a unified UI (Datadog), a proprietary closed AI stack (Dynatrace), or a
+set of open-source components you assemble and maintain yourself (Grafana). **This demo is the
+proof** — point at it rather than asserting it.
+
+### Map each demo moment → the competitive win theme
+| In the demo you showed… | Use it to make this point | Against |
+|---|---|---|
+| §3b OTel showcase (init-container injection, OTLP in/out, `provider=opentelemetry`) | **OTel-native, no proprietary agent.** "Repoint one exporter line at any backend." | **Datadog** (historically needs its agent for full value); **Grafana Alloy** (a proprietary OTel fork = Grafana lock-in) |
+| §2→§3→§5→§4 navigating K8s → traces → logs → AI in one UI, all NRQL | **One data model, one query language.** No PromQL-vs-log-search-vs-trace-explorer seams. | **Datadog** (loosely-coupled backends); **Grafana** (LGTM: Loki/Mimir/Tempo stitched at the UI) |
+| §3 auto-generated service map | **Entity-centric, generated not configured.** No manual tag drift. | **Datadog** (manual tagging for service maps) |
+| §4 / §4b AI Monitoring (tokens, cost, model, prompt/response, in-trace) | **Native LLM observability**, correlated with the rest of the stack. | **Dynatrace** (per battlecard: no native AI workload monitoring); Datadog/Grafana AI newer |
+| §7 alerts → PagerDuty, all as code | **Open ecosystem.** Routes to your tools (PagerDuty, LaunchDarkly, ServiceNow) — no forced bundle. | **Dynatrace** DevCycle bolt-on; closed control plane |
+| High-cardinality K8s + AI spans ingested with no pre-config | **Cardinality without ingestion controls** ("pay more or see less"). | **Datadog** cardinality ceilings |
+
+### Datadog — lead with *unification-is-cosmetic* and *pricing unpredictability*
+- **Unified UI ≠ unified data.** *"Their dashboard looks unified. During a P1, how many query
+  languages and interfaces does your team actually touch moving from metric → log → trace? That seam
+  is the architecture."*
+- **Pricing is the most durable argument** (Gartner cost caution 3 years running). Multi-SKU, per-meter;
+  the customer quote: *"I can estimate within 2x–5x of our actual bill."* Conditional deps (DB Monitoring
+  requires Infra Monitoring); overage penalties. NR = consumption on data + users.
+- **OTel:** *"The question isn't whether Datadog accepts OTel — it does. It's whether you need their
+  agent alongside your collector for the full experience."* ⚠️ Verify current Datadog OTel state before specifics.
+- **Acknowledge:** 800+ integrations, fast cloud onboarding, strong dev brand. Pivot breadth → depth.
+
+### Dynatrace — lead with *cost/DPS complexity*, *closed AI*, and *no native AI-workload monitoring*
+- **Closed vs open AI.** Dynatrace "Fusion AI" requires the full proprietary stack (Smartscape, Grail,
+  OneAgent). *"Are you ready to give an autonomous agent write access to prod with no human in the loop?"*
+- **AI workload gap (most relevant to our §4):** per the battlecard, Davis monitors infra/RCA but **not
+  AI workloads themselves** — no token tracking, no per-model cost, no hallucination/drift detection.
+  Our demo shows exactly that, natively. ⚠️ Verify current Dynatrace AI-monitoring state before specifics.
+- **TCO/DPS:** RAM-based host pricing gets *more* expensive as you go cloud-native; DPS contracts flagged
+  by Gartner 3 years running. Ask: *"What does your Year 2–3 DPS commit look like if consumption doubles?"*
+- **Implementation:** OneAgent + OpenPipeline + Bindplane (two pipelines, not unified). *"15-week rollout vs a working POC by end of week one?"*
+- **Acknowledge:** strong causal AI / Davis, deep enterprise footprint.
+
+### Grafana — lead with *the management tax* and *open-source ≠ Grafana Cloud*
+- **Assume it's already there.** The deal is usually *self-hosted LGTM vs Grafana Cloud vs New Relic as the managed alternative* — not greenfield.
+- **Management tax.** *"Loki + Mimir + Tempo are separate components you assemble, scale, and maintain.
+  How many engineer-hours/week go to running that stack?"* — that erodes the license savings.
+- **"Open" rebuttal:** **Grafana Alloy is a proprietary OTel fork** → Grafana-specific lock-in. New Relic
+  takes the native OTel collector. (Strong tie to §3b — we run upstream OTel, no fork.)
+- **Composability caveat:** Grafana can *show* New Relic/Datadog/CloudWatch on one dashboard, but you
+  can't *correlate, investigate, or get AI across it.* "Seeing ≠ resolving."
+- **Acknowledge:** genuinely excellent dashboards, real community/standards cred, cloud-marketplace billing.
+  Don't fight on dashboard aesthetics — pivot to *what happens after you see the dashboard* (RCA → resolution, our §6).
+
+### Quick objection → pivot
+| Prospect says… | Lead with… |
+|---|---|
+| "Datadog/Dynatrace is the market leader" | NR is a 13-yr Gartner Leader; Gartner cost/complexity cautions on the others |
+| "They have a unified platform" | "Walk me through a P1 across your telemetry" — exposes the multi-store seam (show our single-UI flow) |
+| "They're cheaper" | Total cost: list + commitment + overage + conditional deps; the Datadog 2x–5x forecasting quote |
+| "They have AI now" | What does the AI *do in an incident*? Show native LLM tokens/cost + RCA→PagerDuty (§4, §6) |
+| "We're already on Grafana" | Self-hosted vs Cloud vs managed; quantify the management tax; Alloy = a fork |
+| "We like their dashboards" | Acknowledge; pivot to resolution speed — does the dashboard shorten MTTR? |

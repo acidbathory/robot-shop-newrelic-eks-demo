@@ -27,3 +27,6 @@ build/
 
 # Helm
 **/charts/*.tgz
+
+# Internal competitive-intelligence source — do not publish
+compete.md
