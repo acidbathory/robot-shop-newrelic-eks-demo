@@ -40,7 +40,7 @@ create_condition "Service error rate %" \
 create_condition "API p95 latency (ms)" \
   "SELECT percentile(duration.ms, 95) FROM Span WHERE span.kind = 'server' FACET service.name" ABOVE 1500 300
 create_condition "LLM hourly cost guard (USD)" \
-  "SELECT sum(response.usage.prompt_tokens)/1e6*0.15 + sum(response.usage.completion_tokens)/1e6*0.60 FROM LlmChatCompletionSummary" ABOVE 1 300
+  "SELECT filter(sum(token_count), WHERE is_response IS FALSE)/1e6*0.15 + filter(sum(token_count), WHERE is_response IS TRUE)/1e6*0.60 FROM LlmChatCompletionMessage" ABOVE 1 300
 create_condition "Log error surge" \
   "SELECT count(*) FROM Log WHERE cluster_name = 'robot-shop-eks' AND (level = 'error' OR message LIKE '%Exception%')" ABOVE 50 300
 

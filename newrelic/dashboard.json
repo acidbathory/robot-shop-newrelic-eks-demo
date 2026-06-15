@@ -101,7 +101,7 @@
           "layout": { "column": 5, "row": 1, "width": 4, "height": 3 },
           "visualization": { "id": "viz.bar" },
           "rawConfiguration": {
-            "nrqlQueries": [{ "accountIds": [__ACCOUNT_ID__], "query": "SELECT sum(response.usage.total_tokens) FROM LlmChatCompletionSummary FACET response.model SINCE 1 hour ago" }]
+            "nrqlQueries": [{ "accountIds": [__ACCOUNT_ID__], "query": "SELECT sum(token_count) FROM LlmChatCompletionMessage FACET response.model SINCE 1 hour ago" }]
           }
         },
         {
@@ -109,7 +109,7 @@
           "layout": { "column": 9, "row": 1, "width": 4, "height": 3 },
           "visualization": { "id": "viz.billboard" },
           "rawConfiguration": {
-            "nrqlQueries": [{ "accountIds": [__ACCOUNT_ID__], "query": "SELECT sum(response.usage.prompt_tokens)/1e6*0.15 + sum(response.usage.completion_tokens)/1e6*0.60 AS 'USD' FROM LlmChatCompletionSummary SINCE 1 hour ago" }]
+            "nrqlQueries": [{ "accountIds": [__ACCOUNT_ID__], "query": "SELECT filter(sum(token_count), WHERE is_response IS FALSE)/1e6*0.15 + filter(sum(token_count), WHERE is_response IS TRUE)/1e6*0.60 AS 'USD' FROM LlmChatCompletionMessage SINCE 1 hour ago" }]
           }
         },
         {
@@ -117,7 +117,7 @@
           "layout": { "column": 1, "row": 4, "width": 6, "height": 3 },
           "visualization": { "id": "viz.line" },
           "rawConfiguration": {
-            "nrqlQueries": [{ "accountIds": [__ACCOUNT_ID__], "query": "SELECT percentile(duration, 95)*1000 FROM LlmChatCompletionSummary FACET response.model TIMESERIES SINCE 30 minutes ago" }]
+            "nrqlQueries": [{ "accountIds": [__ACCOUNT_ID__], "query": "SELECT percentile(duration, 95) FROM LlmChatCompletionSummary FACET response.model TIMESERIES SINCE 30 minutes ago" }]
           }
         },
         {

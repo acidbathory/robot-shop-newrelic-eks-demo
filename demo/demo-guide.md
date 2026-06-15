@@ -61,10 +61,10 @@ Companion to `demo-flow.md`. For each New Relic surface: **what it is**, **why i
   under `newrelic-admin` and flipped `ai_monitoring.enabled`. Now every OpenAI call shows token
   usage, cost, latency, the model, and the prompt/response — correlated with the trace that
   triggered it. When the assistant calls the catalogue service, that hop is in the same trace."*
-- **NRQL:**
-  - `SELECT sum(response.usage.total_tokens) FROM LlmChatCompletionSummary FACET response.model`
-  - cost ≈ `SELECT sum(response.usage.prompt_tokens)/1e6*0.15 + sum(response.usage.completion_tokens)/1e6*0.60 FROM LlmChatCompletionSummary` (gpt-4o-mini: $0.15/$0.60 per 1M in/out)
-  - `SELECT content FROM LlmChatCompletionMessage SINCE 30 minutes ago`
+- **NRQL:** (token counts live on `LlmChatCompletionMessage.token_count`; `is_response` splits output vs input)
+  - `SELECT sum(token_count) FROM LlmChatCompletionMessage FACET response.model`
+  - cost ≈ `SELECT filter(sum(token_count), WHERE is_response IS FALSE)/1e6*0.15 + filter(sum(token_count), WHERE is_response IS TRUE)/1e6*0.60 FROM LlmChatCompletionMessage` (gpt-4o-mini: $0.15/$0.60 per 1M in/out)
+  - `SELECT content, role FROM LlmChatCompletionMessage SINCE 30 minutes ago`
 - **Wow:** Ask the live assistant a question, then watch it appear in AI Monitoring seconds later —
   prompt, response, tokens, cost — inside a distributed trace that also shows the catalogue call.
 

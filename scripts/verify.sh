@@ -26,6 +26,6 @@ check "K8s pods"        "SELECT uniqueCount(podName) FROM K8sPodSample WHERE clu
 check "Pod logs"        "SELECT count(*) FROM Log WHERE cluster_name='robot-shop-eks' SINCE 30 minutes ago" 1
 check "APM/trace spans" "SELECT uniqueCount(service.name) FROM Span SINCE 30 minutes ago" 1
 check "AI completions"  "SELECT count(*) FROM LlmChatCompletionSummary SINCE 30 minutes ago" 1
-check "AI tokens"       "SELECT sum(response.usage.total_tokens) FROM LlmChatCompletionSummary SINCE 30 minutes ago" 1
+check "AI tokens"       "SELECT sum(token_count) FROM LlmChatCompletionMessage SINCE 30 minutes ago" 1
 check "K8s events"      "SELECT count(*) FROM InfrastructureEvent WHERE clusterName='robot-shop-eks' SINCE 60 minutes ago" 1
 echo "== done =="
