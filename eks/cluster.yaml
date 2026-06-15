@@ -1,0 +1,48 @@
+apiVersion: eksctl.io/v1alpha5
+kind: ClusterConfig
+
+metadata:
+  name: robot-shop-eks
+  region: ap-south-1
+  version: "1.33"
+  tags:
+    project: nr-demo-cert
+    owner: arnav
+    managedBy: eksctl
+
+# OIDC needed for IRSA (EBS CSI driver, future service accounts)
+iam:
+  withOIDC: true
+
+# Single managed nodegroup sized for robot-shop (12 svcs) + nri-bundle +
+# OTel collector/operator + the Claude chatbot. t3.large = 2 vCPU / 8 GiB.
+managedNodeGroups:
+  - name: ng-robotshop
+    instanceType: t3.large
+    desiredCapacity: 3
+    minSize: 3
+    maxSize: 4
+    volumeSize: 40
+    volumeType: gp3
+    amiFamily: AmazonLinux2023
+    labels:
+      role: workload
+    tags:
+      nodegroup-role: workload
+    iam:
+      withAddonPolicies:
+        ebs: true
+        cloudWatch: true
+
+# Managed addons. EBS CSI uses IRSA via wellKnownPolicies.
+addons:
+  - name: vpc-cni
+  - name: coredns
+  - name: kube-proxy
+  - name: aws-ebs-csi-driver
+    wellKnownPolicies:
+      ebsCSIController: true
+
+cloudWatch:
+  clusterLogging:
+    enableTypes: ["api", "audit", "authenticator"]
