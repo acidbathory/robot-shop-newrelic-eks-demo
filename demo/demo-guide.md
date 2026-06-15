@@ -119,17 +119,39 @@ configured declaratively, exporting standard OTLP.
   and prints the permalink. Same for alerts."*
 
 ## 7. NRQL alerts → PagerDuty
-- **What:** `newrelic/alerts.sh` creates a policy + 6 NRQL conditions via NerdGraph;
+- **What:** `newrelic/alerts.sh` creates a policy + 7 NRQL conditions via NerdGraph;
   `newrelic/pagerduty.sh` adds a **Destination → Channel → Workflow** that pages PagerDuty
   on any of this policy's issues.
 - **Conditions:** pod crashloop, pod not ready, service error rate >10%, API p95 >1.5s,
-  **LLM hourly cost guard**, log error surge.
+  **LLM hourly cost guard**, log error surge, **synthetic monitor failure**.
 - **Say:** *"Conditions are NRQL, defined as code. Issues route through a Workflow to a
   PagerDuty service — so a threshold breach becomes a real incident on someone's phone.
   Including an **AI cost guard**: if OpenAI spend in an hour crosses a threshold, it pages —
   the kind of control AI apps need and rarely have."*
 - **Flow to show:** Alerts & AI → **Workflows** (`Robot Shop -> PagerDuty`) → **Destinations**
   (the PagerDuty service). Then trigger the RCA below and switch to the PagerDuty incident view.
+
+## 8. Synthetic monitoring (proactive, outside-in)
+- **What:** `newrelic/synthetics.sh` creates three monitors as code, run from AWS public
+  locations **ap-south-1 + us-east-1** every 5 min:
+  - **Browser** (`robot-shop storefront (browser)`) — a real headless Chrome loads the storefront;
+    you get availability, **page-load timing**, and a **screenshot** per check.
+  - **Ping** (`ai-assistant health (ping)`) — cheapest liveness check on `/healthz`.
+  - **Scripted API** (`ai-assistant chat e2e (api)`) — a Node script **POSTs a real question to
+    `/chat`** and asserts HTTP 200 + a non-empty `reply`. It validates the entire OpenAI round-trip
+    from outside the cluster, and the steady traffic also keeps AI Monitoring populated.
+- **Why it matters:** everything else in this demo is *inside-out* (the app emits telemetry).
+  Synthetics is *outside-in* — it catches "the site is down / slow / the AI stopped answering"
+  from the **user's vantage point and from multiple regions**, even at 3am with zero real traffic.
+- **Say:** *"Two complementary angles: the app tells us how it feels from the inside, and
+  synthetics tells us how it looks from the outside, worldwide. The scripted check literally asks
+  the assistant a question every five minutes — if the model, the key, or the network breaks, we
+  know before a customer does."*
+- **Wired to PagerDuty:** the **"Synthetic monitor failure"** condition is in the same policy, so a
+  failed check from any location pages through the same Workflow. Demo it by scaling `web` to 0
+  (the browser monitor goes red → incident) — see the outside-in variant in the RCA below.
+- **NRQL to show:** `SELECT count(*) FROM SyntheticCheck FACET monitorName, result SINCE 1 hour ago`
+  and `SELECT average(duration) FROM SyntheticCheck WHERE monitorName LIKE '%storefront%' TIMESERIES`.
 
 ---
 

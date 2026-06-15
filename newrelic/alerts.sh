@@ -43,5 +43,8 @@ create_condition "LLM hourly cost guard (USD)" \
   "SELECT filter(sum(token_count), WHERE is_response IS FALSE)/1e6*0.15 + filter(sum(token_count), WHERE is_response IS TRUE)/1e6*0.60 FROM LlmChatCompletionMessage" ABOVE 1 300
 create_condition "Log error surge" \
   "SELECT count(*) FROM Log WHERE cluster_name = 'robot-shop-eks' AND (level = 'error' OR message LIKE '%Exception%')" ABOVE 50 300
+# Synthetic monitors (created by newrelic/synthetics.sh) — page if any check fails from any location.
+create_condition "Synthetic monitor failure" \
+  "SELECT count(*) FROM SyntheticCheck WHERE result = 'FAILED' AND monitorName IN ('robot-shop storefront (browser)','ai-assistant health (ping)','ai-assistant chat e2e (api)') FACET monitorName" ABOVE 0 300
 
-echo "==> Done. Policy '$POLICY_NAME' ($POLICY_ID) created with 6 conditions."
+echo "==> Done. Policy '$POLICY_NAME' ($POLICY_ID) created with 7 conditions."

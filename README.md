@@ -27,6 +27,7 @@ dashboards and alerts defined as code.
 | 5 | AI Monitoring (tokens, cost, model, response) | OpenAI shop-assistant via NR Python APM agent |
 | 6 | Dashboards as code | NerdGraph (`newrelic/dashboard.json`) |
 | 7 | NRQL alerts → PagerDuty | NerdGraph (`newrelic/alerts.sh` + `newrelic/pagerduty.sh`) |
+| 8 | Synthetic monitoring (browser, ping, scripted API) | NerdGraph (`newrelic/synthetics.sh`) |
 
 ## Layout
 ```
@@ -71,7 +72,7 @@ bash scripts/teardown.sh          # eksctl delete cluster + helm uninstalls + cl
 > ⚠️ Cost: EKS control plane + 3× t3.large ≈ $10–12/day in ap-south-1. `pause.sh` drops this
 > to ~$3–4/day without destroying anything; `teardown.sh` takes it to $0.
 
-## Build status — complete & verified (all 6 NR signals green); currently paused
+## Build status — complete & verified (all 7 NR signals green); currently paused
 - [x] Phase 0 — repo + tooling bootstrap
 - [x] Phase 1 — EKS cluster
 - [x] Phase 2 — nri-bundle

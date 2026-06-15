@@ -115,10 +115,14 @@ begins here** (pennies/day on gpt-4o-mini).
 ## 6. Dashboards & alerts as code  (~1 min)
 ```bash
 bash newrelic/deploy-dashboard.sh                # prints dashboard GUID/permalink
-bash newrelic/alerts.sh                          # policy + 6 NRQL conditions
+bash newrelic/alerts.sh                          # policy + 7 NRQL conditions (incl. synthetic-failure)
+bash newrelic/synthetics.sh                      # 3 synthetic monitors (browser + ping + scripted /chat)
 # Optional — route alerts to PagerDuty (needs pagerduty_integration_key in Keychain):
 bash newrelic/pagerduty.sh                       # destination + channel + workflow ~30s
 ```
+> `synthetics.sh` reads the live ELB hostnames from the cluster, so run it AFTER the
+> storefront + ai-assistant services have their LoadBalancers (Phases 3 & 5). Monitors run
+> from AWS public locations (ap-south-1 + us-east-1) every 5 min; first results land ~5-10 min later.
 > Both scripts **create new resources each run** (no upsert). Re-running makes duplicates —
 > delete the old dashboard (`dashboardDelete`) / policy (`alertsPolicyDelete`) first if rerunning.
 > `alerts.sh` already sets `set +o braceexpand` (GraphQL `{..,..}` would otherwise be mangled by bash).
@@ -127,9 +131,10 @@ bash newrelic/pagerduty.sh                       # destination + channel + workf
 
 ## 7. Verify  (~1 min, after ~3–5 min of traffic)
 ```bash
-bash scripts/verify.sh        # all 6 signals should PASS
+bash scripts/verify.sh        # all 7 signals should PASS
 ```
-Expected: K8s pods, Pod logs, APM/trace spans, AI completions, AI tokens, K8s events — all PASS.
+Expected: K8s pods, Pod logs, APM/trace spans, AI completions, AI tokens, K8s events,
+Synthetic checks — all PASS. (Synthetic checks lag ~5-10 min after `synthetics.sh`.)
 > AI token counts live on `LlmChatCompletionMessage.token_count` (split by `is_response`),
 > **not** on `LlmChatCompletionSummary`. Dashboard/alerts/verify already use the correct schema.
 

@@ -28,4 +28,6 @@ check "APM/trace spans" "SELECT uniqueCount(service.name) FROM Span SINCE 30 min
 check "AI completions"  "SELECT count(*) FROM LlmChatCompletionSummary SINCE 30 minutes ago" 1
 check "AI tokens"       "SELECT sum(token_count) FROM LlmChatCompletionMessage SINCE 30 minutes ago" 1
 check "K8s events"      "SELECT count(*) FROM InfrastructureEvent WHERE clusterName='robot-shop-eks' SINCE 60 minutes ago" 1
+check "Synthetic checks" "SELECT count(*) FROM SyntheticCheck WHERE monitorName LIKE '%robot-shop%' OR monitorName LIKE '%ai-assistant%' SINCE 30 minutes ago" 1
 echo "== done =="
+echo "   (Synthetic checks can read 0 for the first ~5-10 min after creation until the first run completes.)"

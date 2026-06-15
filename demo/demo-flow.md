@@ -58,6 +58,18 @@ Run in a terminal: **`bash scripts/show-otel.sh`** and narrate the four beats:
 1. From a pod in the cluster explorer → **See logs**, or Dashboard → **Logs page**.
 2. Filter to error-level logs; show logs are correlated to the K8s entity.
 
+## 5b. Synthetic monitoring — proactive, outside-in (2 min) — see demo-guide.md § 8
+1. **Synthetic monitoring** → show the 3 monitors, all green:
+   - **robot-shop storefront (browser)** — real Chrome from AWS ap-south-1 + us-east-1; open a
+     result → **page-load waterfall + screenshot** of the actual storefront.
+   - **ai-assistant health (ping)** — lightweight liveness on `/healthz`.
+   - **ai-assistant chat e2e (api)** — a scripted monitor that **POSTs a real question to
+     `/chat`** and asserts a non-empty answer — it exercises the whole OpenAI path from outside
+     the cluster (and quietly keeps AI Monitoring fed).
+2. **Say:** *"This is synthetic, outside-in monitoring — we catch problems from the user's
+   vantage point before a real user does, from multiple regions. The scripted one actually
+   talks to the AI every 5 minutes."* Failures feed the **same** alert policy → PagerDuty.
+
 ## 6. RCA / failure scenario → PagerDuty (5 min) — see demo-guide.md "Break it on purpose"
 1. Trigger the failure: `kubectl scale deploy/catalogue --replicas=0 -n robot-shop`.
 2. Watch the chain: error rate climbs (APM page) → New Relic **issue opens** → the
@@ -66,10 +78,12 @@ Run in a terminal: **`bash scripts/show-otel.sh`** and narrate the four beats:
 4. Service map shows the broken dependency; **Logs** show connection-refused errors in the same window.
 5. Restore: `kubectl scale deploy/catalogue --replicas=1 -n robot-shop` → error rate falls,
    the issue closes, and the **PagerDuty incident auto-resolves**.
+   > Optional outside-in variant: `kubectl scale deploy/web --replicas=0 -n robot-shop` trips the
+   > **storefront browser monitor** → "Synthetic monitor failure" condition pages. Restore with `--replicas=1`.
 
 ## 7. Wrap (1 min)
 - Recap the surfaces — **one platform**: K8s + infra, APM & **OpenTelemetry** distributed tracing,
-  AI Monitoring, logs, NRQL alerts → **PagerDuty**.
+  AI Monitoring, logs, **synthetic monitoring**, NRQL alerts → **PagerDuty**.
 - Everything is **as code** and version-controlled: dashboards (`deploy-dashboard.sh`),
   alerts (`alerts.sh`), PagerDuty routing (`pagerduty.sh`), and the OTel + K8s manifests.
 - Mention `scripts/show-otel.sh` and `scripts/verify.sh` as the repeatable proof tools.
