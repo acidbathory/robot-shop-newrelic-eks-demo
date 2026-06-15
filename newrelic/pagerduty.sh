@@ -29,15 +29,18 @@ echo "    policy id: $POLICY_ID"
 # 2. Destination — PagerDuty service integration (auth token = the integration key).
 echo "==> Creating PagerDuty destination"
 DRESP="$(gql "$(jq -n --argjson a "$ACCT" --arg t "$PD_KEY" \
-  '{query:"mutation($a:Int!,$t:SecureValue!){aiNotificationsCreateDestination(accountId:$a,destination:{type:PAGERDUTY_SERVICE_INTEGRATION,name:\"PagerDuty - Robot Shop\",auth:{type:TOKEN,token:{prefix:\"Token token=\",token:$t}}}){destination{id} error{description details}}}",variables:{a:$a,t:$t}}')")"
+  '{query:"mutation($a:Int!,$t:SecureValue!){aiNotificationsCreateDestination(accountId:$a,destination:{type:PAGERDUTY_SERVICE_INTEGRATION,name:\"PagerDuty - Robot Shop\",properties:[],auth:{type:TOKEN,token:{prefix:\"Token token=\",token:$t}}}){destination{id} error{__typename ... on AiNotificationsResponseError{description} ... on AiNotificationsDataValidationError{details}}}}",variables:{a:$a,t:$t}}')")"
 DEST_ID="$(echo "$DRESP" | jq -r '.data.aiNotificationsCreateDestination.destination.id // empty')"
 [[ -z "$DEST_ID" ]] && { echo "destination failed:" >&2; echo "$DRESP" | jq -c '.data.aiNotificationsCreateDestination.error // .errors' >&2; exit 1; }
+# Validate the token before building channel/workflow on top of it.
+DSTATUS="$(gql "$(jq -n --argjson a "$ACCT" --arg d "$DEST_ID" '{query:"query($a:Int!,$d:[ID!]){actor{account(id:$a){aiNotifications{destinations(filters:{id:$d}){entities{status}}}}}}",variables:{a:$a,d:[$d]}}')" | jq -r '.data.actor.account.aiNotifications.destinations.entities[0].status // "UNKNOWN"')"
+echo "    destination status: $DSTATUS"
 echo "    destination id: $DEST_ID"
 
 # 3. Channel — maps the issue to the PagerDuty Events API v2 payload.
 echo "==> Creating PagerDuty channel"
 CRESP="$(gql "$(jq -n --argjson a "$ACCT" --arg d "$DEST_ID" \
-  '{query:"mutation($a:Int!,$d:ID!){aiNotificationsCreateChannel(accountId:$a,channel:{type:PAGERDUTY_SERVICE_INTEGRATION,name:\"PagerDuty - Robot Shop\",destinationId:$d,product:IINT,properties:[{key:\"summary\",value:\"{{ annotations.title.[0] }}\"},{key:\"customDetails\",value:\"{{ json annotations }}\"}]}){channel{id} error{description details}}}",variables:{a:$a,d:$d}}')")"
+  '{query:"mutation($a:Int!,$d:ID!){aiNotificationsCreateChannel(accountId:$a,channel:{type:PAGERDUTY_SERVICE_INTEGRATION,name:\"PagerDuty - Robot Shop\",destinationId:$d,product:IINT,properties:[{key:\"summary\",value:\"{{ annotations.title.[0] }}\"},{key:\"customDetails\",value:\"{{ json annotations }}\"}]}){channel{id} error{__typename ... on AiNotificationsResponseError{description} ... on AiNotificationsDataValidationError{details}}}}",variables:{a:$a,d:$d}}')")"
 CHAN_ID="$(echo "$CRESP" | jq -r '.data.aiNotificationsCreateChannel.channel.id // empty')"
 [[ -z "$CHAN_ID" ]] && { echo "channel failed:" >&2; echo "$CRESP" | jq -c '.data.aiNotificationsCreateChannel.error // .errors' >&2; exit 1; }
 echo "    channel id: $CHAN_ID"
