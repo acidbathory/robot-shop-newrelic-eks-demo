@@ -8,7 +8,7 @@ Companion to `demo-flow.md`. For each New Relic surface: **what it is**, **why i
 
 ## Architecture recap (say this once, up front)
 > "Three things are running on EKS: (1) **robot-shop**, a 12-service polyglot store —
-> Node.js, Java, Python, Go, PHP, with MongoDB, MySQL, Redis, and RabbitMQ; (2) a **Claude
+> Node.js, Java, Python, Go, PHP, with MongoDB, MySQL, Redis, and RabbitMQ; (2) an **OpenAI
 > shop assistant** I built; and (3) the New Relic agents. Telemetry reaches New Relic two ways:
 > the **nri-bundle** for Kubernetes, and an **OpenTelemetry collector** for traces and the
 > assistant's AI data. One backend, one correlated view."
@@ -51,19 +51,19 @@ Companion to `demo-flow.md`. For each New Relic surface: **what it is**, **why i
   - `SELECT average(duration.ms), count(*) FROM Span WHERE span.kind='client' FACET service.name, name`
 - **Wow:** A single trace waterfall spanning web → catalogue → MongoDB, with timings per hop.
 
-## 5. AI Monitoring (Claude) — the headline
+## 5. AI Monitoring (OpenAI) — the headline
 - **What:** The assistant runs under New Relic's **Python APM agent**, which auto-instruments the
-  **Anthropic SDK**. Every Claude call becomes an AI Monitoring event with model, tokens, latency,
+  **OpenAI SDK**. Every chat completion becomes an AI Monitoring event with model, tokens, latency,
   and (optionally) the full prompt + response.
 - **Why:** AI apps are black boxes without this — you can't see cost, latency, drift, or what the
   model actually said. New Relic makes LLM calls first-class telemetry.
 - **Say:** *"This is the part teams struggle with. I didn't write any tracing code — I ran the app
-  under `newrelic-admin` and flipped `ai_monitoring.enabled`. Now every Claude call shows token
+  under `newrelic-admin` and flipped `ai_monitoring.enabled`. Now every OpenAI call shows token
   usage, cost, latency, the model, and the prompt/response — correlated with the trace that
   triggered it. When the assistant calls the catalogue service, that hop is in the same trace."*
 - **NRQL:**
   - `SELECT sum(response.usage.total_tokens) FROM LlmChatCompletionSummary FACET response.model`
-  - cost ≈ `SELECT sum(response.usage.prompt_tokens)/1e6*1.0 + sum(response.usage.completion_tokens)/1e6*5.0 FROM LlmChatCompletionSummary` (Haiku 4.5: $1/$5 per 1M in/out)
+  - cost ≈ `SELECT sum(response.usage.prompt_tokens)/1e6*0.15 + sum(response.usage.completion_tokens)/1e6*0.60 FROM LlmChatCompletionSummary` (gpt-4o-mini: $0.15/$0.60 per 1M in/out)
   - `SELECT content FROM LlmChatCompletionMessage SINCE 30 minutes ago`
 - **Wow:** Ask the live assistant a question, then watch it appear in AI Monitoring seconds later —
   prompt, response, tokens, cost — inside a distributed trace that also shows the catalogue call.
@@ -78,7 +78,7 @@ Companion to `demo-flow.md`. For each New Relic surface: **what it is**, **why i
 - **What:** `newrelic/alerts.sh` creates a policy + 6 NRQL conditions via NerdGraph.
 - **Conditions:** pod crashloop, pod not ready, service error rate >10%, API p95 >1.5s,
   **LLM hourly cost guard**, log error surge.
-- **Say:** *"Including an **AI cost guard** — if Claude spend in an hour crosses a threshold, it pages.
+- **Say:** *"Including an **AI cost guard** — if OpenAI spend in an hour crosses a threshold, it pages.
   That's the kind of control AI apps need and rarely have."*
 
 ---
@@ -103,7 +103,7 @@ kubectl scale deploy/catalogue --replicas=1 -n robot-shop
    effect, and evidence are in one place."*
 
 > Alternative AI-flavored RCA: point the assistant's `CATALOGUE_URL` at a bad host (or scale catalogue
-> to 0) and show the assistant degrade — its traces error on the catalogue hop while Claude calls
+> to 0) and show the assistant degrade — its traces error on the catalogue hop while OpenAI calls
 > still succeed, isolating the failure to the dependency, not the model.
 
 ---
@@ -115,6 +115,6 @@ kubectl scale deploy/catalogue --replicas=1 -n robot-shop
 - **"Does capturing prompts/responses leak data?"** — `ai_monitoring.record_content.enabled` is a
   toggle; turn it off to keep metadata (tokens/latency/model) without content.
 - **"What does this cost to run?"** — EKS control plane + 3× t3.large ≈ $10–12/day in ap-south-1;
-  Claude on Haiku is cents at demo volume. Everything tears down with `scripts/teardown.sh`.
+  OpenAI on gpt-4o-mini is cents at demo volume. Everything tears down with `scripts/teardown.sh`.
 - **"Is the AI cost real or estimated?"** — token counts are real (from the API response); the USD
-  figure is computed from published Haiku 4.5 pricing in NRQL.
+  figure is computed from published gpt-4o-mini pricing in NRQL.

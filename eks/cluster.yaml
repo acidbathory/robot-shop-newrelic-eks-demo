@@ -15,7 +15,7 @@ iam:
   withOIDC: true
 
 # Single managed nodegroup sized for robot-shop (12 svcs) + nri-bundle +
-# OTel collector/operator + the Claude chatbot. t3.large = 2 vCPU / 8 GiB.
+# OTel collector/operator + the OpenAI chatbot. t3.large = 2 vCPU / 8 GiB.
 managedNodeGroups:
   - name: ng-robotshop
     instanceType: t3.large

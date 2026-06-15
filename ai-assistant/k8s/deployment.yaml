@@ -26,10 +26,10 @@ spec:
               valueFrom: { secretKeyRef: { name: ai-assistant-secrets, key: nrLicenseKey } }
             - name: NEW_RELIC_APP_NAME
               value: robot-shop-ai-assistant
-            - name: ANTHROPIC_API_KEY
-              valueFrom: { secretKeyRef: { name: ai-assistant-secrets, key: anthropicApiKey } }
-            - name: ANTHROPIC_MODEL
-              value: claude-haiku-4-5
+            - name: OPENAI_API_KEY
+              valueFrom: { secretKeyRef: { name: ai-assistant-secrets, key: openaiApiKey } }
+            - name: OPENAI_MODEL
+              value: gpt-4o-mini
             - name: CATALOGUE_URL
               value: http://catalogue.robot-shop.svc.cluster.local:8080
           readinessProbe:

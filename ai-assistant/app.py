@@ -1,9 +1,9 @@
 """
-Robot Shop AI Assistant — a Claude-powered shop assistant.
+Robot Shop AI Assistant — an OpenAI-powered shop assistant.
 
 Observability: run under the New Relic Python APM agent
 (`newrelic-admin run-program uvicorn ...`). The agent auto-instruments the
-`anthropic` SDK, so every Claude call shows up in New Relic AI Monitoring with
+`openai` SDK, so every chat completion shows up in New Relic AI Monitoring with
 model, input/output tokens, cost, latency, and the prompt/response — no manual
 span code needed. The HTTP call to the robot-shop catalogue is captured as a
 distributed-tracing segment, linking this service to robot-shop.
@@ -14,14 +14,14 @@ from fastapi import FastAPI
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
-import anthropic
+from openai import OpenAI
 
-# Model is configurable; default Haiku for cheap, high-volume demo traffic.
-MODEL = os.getenv("ANTHROPIC_MODEL", "claude-haiku-4-5")
+# Model is configurable; default gpt-4o-mini for cheap, high-volume demo traffic.
+MODEL = os.getenv("OPENAI_MODEL", "gpt-4o-mini")
 CATALOGUE_URL = os.getenv("CATALOGUE_URL", "http://catalogue.robot-shop.svc.cluster.local:8080")
 MAX_TOKENS = int(os.getenv("MAX_TOKENS", "512"))
 
-client = anthropic.Anthropic()  # reads ANTHROPIC_API_KEY from env
+client = OpenAI()  # reads OPENAI_API_KEY from env
 app = FastAPI(title="Robot Shop AI Assistant")
 
 
@@ -65,19 +65,21 @@ def healthz():
 @app.post("/chat")
 def chat(req: ChatRequest):
     system = SYSTEM_TEMPLATE.format(catalogue=fetch_catalogue())
-    message = client.messages.create(
+    completion = client.chat.completions.create(
         model=MODEL,
         max_tokens=MAX_TOKENS,
-        system=system,
-        messages=[{"role": "user", "content": req.message}],
+        messages=[
+            {"role": "system", "content": system},
+            {"role": "user", "content": req.message},
+        ],
     )
-    reply = "".join(b.text for b in message.content if b.type == "text")
+    reply = completion.choices[0].message.content or ""
     return {
         "reply": reply,
-        "model": message.model,
+        "model": completion.model,
         "usage": {
-            "input_tokens": message.usage.input_tokens,
-            "output_tokens": message.usage.output_tokens,
+            "input_tokens": completion.usage.prompt_tokens,
+            "output_tokens": completion.usage.completion_tokens,
         },
     }
 

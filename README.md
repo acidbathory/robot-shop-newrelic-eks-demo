@@ -1,8 +1,8 @@
-# New Relic Demo Certification — EKS · robot-shop · Claude AI Observability
+# New Relic Demo Certification — EKS · robot-shop · AI Observability
 
 A full-stack New Relic showcase built for a demo certification. It runs the
 [Instana **robot-shop**](https://github.com/instana/robot-shop) polyglot microservices app on
-**Amazon EKS**, adds a **Claude-powered shop-assistant chatbot**, and lights up New Relic
+**Amazon EKS**, adds an **OpenAI-powered shop-assistant chatbot**, and lights up New Relic
 across **Kubernetes, APM, distributed tracing, logs, and AI Monitoring** — with
 dashboards and alerts defined as code.
 
@@ -11,7 +11,7 @@ dashboards and alerts defined as code.
   ├─ robot-shop      web · catalogue · cart · user · shipping · payment · ratings ·
   │                  dispatch · mongodb · mysql · redis · rabbitmq · loadgen
   │                    └─ OTel auto-instrumentation (java / node / python)
-  ├─ ai-assistant    Claude shop-assistant (FastAPI + anthropic SDK + NR Python APM agent)
+  ├─ ai-assistant    OpenAI shop-assistant (FastAPI + openai SDK + NR Python APM agent)
   ├─ observability   OTel Collector (OTLP → New Relic) + OpenTelemetry Operator
   └─ newrelic        nri-bundle: infra · kube-state-metrics · kube-events · logs · prometheus
  All telemetry → New Relic US (otlp.nr-data.net / api.newrelic.com)  ·  account 8059020
@@ -24,7 +24,7 @@ dashboards and alerts defined as code.
 | 2 | Kubernetes events | nri-kube-events |
 | 3 | Log forwarding (pod logs) | newrelic-logging (Fluent Bit) |
 | 4 | APM + distributed tracing | robot-shop via OTel auto-instrumentation |
-| 5 | AI Monitoring (tokens, cost, model, response) | Claude shop-assistant via NR Python APM agent |
+| 5 | AI Monitoring (tokens, cost, model, response) | OpenAI shop-assistant via NR Python APM agent |
 | 6 | Dashboards as code | NerdGraph (`newrelic/dashboard.json`) |
 | 7 | NRQL alerts | NerdGraph (`newrelic/alerts.sh`) |
 
@@ -34,7 +34,7 @@ eks/            eksctl ClusterConfig + provisioning scripts
 newrelic/       nri-bundle values/install, dashboard.json, alerts, deploy scripts
 robot-shop/     vendored upstream Helm chart + values
 observability/  OTel Operator install, collector config, Instrumentation CRD
-ai-assistant/   Claude shop-assistant service (FastAPI), Dockerfile, k8s manifests, loadgen
+ai-assistant/   OpenAI shop-assistant service (FastAPI), Dockerfile, k8s manifests, loadgen
 demo/           demo-flow.md, demo-guide.md
 scripts/        load-env.sh, deploy/verify/teardown helpers
 ```
@@ -70,7 +70,7 @@ bash scripts/teardown.sh          # eksctl delete cluster + helm uninstalls + cl
 - [ ] Phase 2 — nri-bundle
 - [ ] Phase 3 — robot-shop
 - [ ] Phase 4 — OTel tracing
-- [ ] Phase 5 — Claude shop-assistant + AI Monitoring
+- [ ] Phase 5 — OpenAI shop-assistant + AI Monitoring
 - [ ] Phase 6 — dashboards + alerts
 - [ ] Phase 7 — demo flow + guide
 - [ ] Phase 8 — teardown + GitHub push

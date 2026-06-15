@@ -105,11 +105,11 @@
           }
         },
         {
-          "title": "Estimated cost (USD) — Haiku 4.5 pricing",
+          "title": "Estimated cost (USD) — gpt-4o-mini pricing",
           "layout": { "column": 9, "row": 1, "width": 4, "height": 3 },
           "visualization": { "id": "viz.billboard" },
           "rawConfiguration": {
-            "nrqlQueries": [{ "accountIds": [__ACCOUNT_ID__], "query": "SELECT sum(response.usage.prompt_tokens)/1e6*1.0 + sum(response.usage.completion_tokens)/1e6*5.0 AS 'USD' FROM LlmChatCompletionSummary SINCE 1 hour ago" }]
+            "nrqlQueries": [{ "accountIds": [__ACCOUNT_ID__], "query": "SELECT sum(response.usage.prompt_tokens)/1e6*0.15 + sum(response.usage.completion_tokens)/1e6*0.60 AS 'USD' FROM LlmChatCompletionSummary SINCE 1 hour ago" }]
           }
         },
         {

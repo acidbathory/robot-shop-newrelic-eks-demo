@@ -6,13 +6,13 @@ source "$ROOT/scripts/load-env.sh" >/dev/null
 NS=ai-assistant
 IMAGE="$(cat "$ROOT/ai-assistant/.image" 2>/dev/null || echo "$ECR_REGISTRY/ai-assistant:latest")"
 
-: "${ANTHROPIC_API_KEY:?ANTHROPIC_API_KEY not set — add it to the Keychain (anthropic_api_key) and re-run load-env.sh}"
+: "${OPENAI_API_KEY:?OPENAI_API_KEY not set — add it to the Keychain (openai_api_key) and re-run load-env.sh}"
 
 echo "==> Namespace + secrets"
 kubectl create namespace "$NS" --dry-run=client -o yaml | kubectl apply -f -
 kubectl create secret generic ai-assistant-secrets -n "$NS" \
   --from-literal=nrLicenseKey="$NEW_RELIC_INGEST_KEY" \
-  --from-literal=anthropicApiKey="$ANTHROPIC_API_KEY" \
+  --from-literal=openaiApiKey="$OPENAI_API_KEY" \
   --dry-run=client -o yaml | kubectl apply -f -
 
 echo "==> Deploy (image: $IMAGE)"

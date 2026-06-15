@@ -1,4 +1,4 @@
-# Demo Flow — Robot Shop on EKS + Claude AI Observability with New Relic
+# Demo Flow — Robot Shop on EKS + AI Observability with New Relic
 
 A tight, end-to-end click path for the live certification demo (~20–25 min).
 Have these tabs open beforehand: **New Relic** (one.newrelic.com), the **robot-shop**
@@ -14,7 +14,7 @@ to confirm all signals are green.
 
 ## 1. Frame the story (1 min)
 > "We're running a real microservices store — Instana's robot-shop — on Amazon EKS,
-> plus a Claude-powered shop assistant. Everything you'll see in New Relic is live
+> plus an OpenAI-powered shop assistant. Everything you'll see in New Relic is live
 > telemetry: Kubernetes, traces, logs, and full AI observability. No screenshots."
 
 ## 2. Kubernetes & infrastructure (4 min)
@@ -34,10 +34,10 @@ to confirm all signals are green.
 1. Open the **AI assistant**; ask: *"What's a good starter drone?"* and *"Anything under $100?"*
 2. New Relic → **AI Monitoring** → show:
    - The `robot-shop-ai-assistant` app, response view with **prompt + completion** captured.
-   - **Token usage** and **model** (`claude-haiku-4-5`), **response time**.
-3. Click a Claude call → show it inside a **distributed trace** → the assistant → **catalogue** call.
+   - **Token usage** and **model** (`gpt-4o-mini`), **response time**.
+3. Click an OpenAI call → show it inside a **distributed trace** → the assistant → **catalogue** call.
 4. Dashboard → **AI Monitoring page**: completions/min, tokens by model, estimated cost, p95 latency, recent prompts.
-5. Talking point: "New Relic auto-instruments the Anthropic SDK — token cost, latency, and even the prompt/response content, correlated with the rest of the stack."
+5. Talking point: "New Relic auto-instruments the OpenAI SDK — token cost, latency, and even the prompt/response content, correlated with the rest of the stack."
 
 ## 5. Logs in context (2 min)
 1. From a pod in the cluster explorer → **See logs**, or Dashboard → **Logs page**.
