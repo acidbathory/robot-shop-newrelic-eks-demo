@@ -1,0 +1,22 @@
+# EKS overrides for the vendored robot-shop chart.
+# Upstream defaults already use public robotshop/rs-* images and a LoadBalancer
+# web service (nodeport:false); we only adjust what differs on EKS.
+
+image:
+  repo: robotshop
+  version: latest
+  pullPolicy: IfNotPresent
+
+# EKS ships a default "gp2" StorageClass (chart default "standard" does not exist here).
+redis:
+  storageClassName: gp2
+
+# web Service stays type LoadBalancer (nodeport:false) -> public ELB URL for the demo.
+nodeport: false
+
+# Instana EUM disabled — we observe via New Relic (OTel), not Instana.
+eum:
+  key: null
+
+psp:
+  enabled: false

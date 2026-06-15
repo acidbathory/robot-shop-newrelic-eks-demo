@@ -1,0 +1,1 @@
+Vendored from https://github.com/instana/robot-shop @ 55292e2 (K8s/helm + K8s/load-deployment.yaml)
