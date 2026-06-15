@@ -1,0 +1,40 @@
+# Helm values for New Relic's nri-bundle — the Kubernetes integration that lights up
+# the K8s cluster explorer, infrastructure, events, and log forwarding on EKS.
+# licenseKey and global.cluster are passed on the command line by install-nri-bundle.sh.
+#
+# Pixie is disabled to keep the demo lean; everything else for a full K8s showcase is on.
+
+global:
+  lowDataMode: true          # trim ingest volume for the demo
+
+# Core Kubernetes infrastructure: nodes, pods, containers, control plane.
+newrelic-infrastructure:
+  enabled: true
+  privileged: true
+
+# kube-state-metrics: deployments, replicasets, desired vs ready, etc.
+kube-state-metrics:
+  enabled: true
+
+# Kubernetes events (scheduling, OOMKills, image pull errors) → New Relic.
+nri-kube-events:
+  enabled: true
+
+# Pod log forwarding (Fluent Bit DaemonSet) → New Relic Logs.
+newrelic-logging:
+  enabled: true
+
+# Injects New Relic metadata so APM/OTel traces link to K8s entities.
+nri-metadata-injection:
+  enabled: true
+
+# Prometheus scraping of annotated targets (extra coverage; control-plane & add-on metrics).
+newrelic-prometheus-agent:
+  enabled: true
+  lowDataMode: true
+
+# Not used.
+newrelic-pixie:
+  enabled: false
+pixie-chart:
+  enabled: false
